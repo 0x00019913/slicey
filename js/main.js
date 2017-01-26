@@ -1,4 +1,4 @@
-var model = new Model(150);
+var model = new Model();
 
 var handleFile = function(file) {
   fr = new FileReader();
@@ -9,6 +9,13 @@ var handleFile = function(file) {
 };
 
 var parseArray = function(array) {
+  var numSlices = document.getElementById('numSlices').value;
+  if (!numSlices) {
+    document.getElementById('numSlices').value = "30";
+    numSlices = 30;
+  }
+  model.numSlices = parseInt(numSlices);
+
   // mimicking http://tonylukasavage.com/blog/2013/04/10/web-based-stl-viewing-three-dot-js/
   var dv = new DataView(array, 80);
   var isLittleEndian = true;
