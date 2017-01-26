@@ -1,0 +1,19 @@
+body, html {
+  padding: 0;
+  margin: 0;
+}
+
+.centerbox {
+  margin: 0 auto;
+  text-align: center;
+}
+
+#container {
+  width: 800px;
+  height: 800px;
+  margin: 0 auto;
+}
+
+#file {
+
+}
