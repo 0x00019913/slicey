@@ -33,3 +33,21 @@ Triangle.prototype.add = function(vertex) {
     this.zmax = vertex.z>this.zmax ? vertex.z : this.zmax;
   }
 };
+
+Triangle.prototype.yIntersection = function(planePos) {
+  var segment = [];
+  for (var i=0; i<3; i++) {
+    var v1 = this.vertices[i];
+    var v2 = this.vertices[(i+1)%3];
+    if ((v1.y<planePos && v2.y>planePos) || (v1.y>planePos && v2.y<planePos)) {
+      var dy = v2.y-v1.y;
+      if (dy==0) return;
+      var factor = (planePos-v1.y)/dy;
+      var x = v1.x + (v2.x-v1.x)*factor;
+      var z = v1.z + (v2.z-v1.z)*factor;
+      segment.push(new THREE.Vector3(x,planePos,z));
+    }
+  }
+  if (segment.length!=2) console.log("strange segment length: ", segment);
+  return segment;
+}

@@ -1,4 +1,4 @@
-var model = new Model(15);
+var model = new Model(150);
 
 var handleFile = function(file) {
   fr = new FileReader();
@@ -31,9 +31,7 @@ var parseArray = function(array) {
     model.add(triangle);
   }
 
-  model.buildSliceLists();
-
-  model.renderPlainModel(scene);
+  model.renderLineModel(scene);
 };
 
 

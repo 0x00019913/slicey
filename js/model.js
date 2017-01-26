@@ -9,6 +9,7 @@ function Model(numSlices) {
   this.count = 0;
   this.sliceCount = null;
   this.numSlices = numSlices;
+  this.delta = null;
 }
 
 Model.prototype.add = function(triangle) {
@@ -35,7 +36,7 @@ Model.prototype.getCenter = function() {
     (this.xmax + this.xmin)/2,
     (this.ymax + this.ymin)/2,
     (this.zmax + this.zmin)/2
-  ]
+  ];
 }
 
 Model.prototype.buildSliceLists = function() {
@@ -57,21 +58,76 @@ Model.prototype.buildSliceLists = function() {
     sliceLists[index].push(triangle);
   }
 
-  console.log(sliceLists);
+  return sliceLists;
 }
 
-/* debugging method - shows full model, unsliced */
-Model.prototype.renderPlainModel = function(scene) {
+Model.prototype.slice = function() {
+  var sliceLists = this.buildSliceLists();
+  var sweepList = [];
+  var segmentLists = [];
+
+  var intersectingList = [];
+  for (var i=0; i<this.numSlices; i++) {
+    sweepList = sweepList.concat(sliceLists[i]);
+    segmentLists[i] = [];
+    var slicePos = this.ymin + (i+0.5)*this.delta;
+    for (var j=0; j<sweepList.length; j++) {
+      if (sweepList[j].ymax<slicePos) {
+        sweepList.splice(j,1); // crude but should work
+      }
+      else {
+        var intersection = sweepList[j].yIntersection(slicePos);
+        segmentLists[i].push(intersection);
+      }
+    }
+  }
+  return segmentLists;
+}
+
+/* renders line segments in the "set" argument */
+Model.prototype.renderLineModel = function(scene) {
+  var segmentLists = this.slice();
   /* set up camera, put in model */
   var center = model.getCenter();
   cam.origin = new THREE.Vector3(center[0], center[1], center[2]);
   cam.r = 5;
   var geo = new THREE.Geometry();
-  for (var i=0; i<model.count; i++) {
-    for (j=0; j<3; j++) {
-      geo.vertices.push(model.triangles[i].vertices[j]);
+  for (var i=0; i<segmentLists.length; i++) {
+    for (var j=0; j<segmentLists[i].length; j++) {
+      geo.vertices.push(segmentLists[i][j][0]);
+      geo.vertices.push(segmentLists[i][j][1]);
     }
-    geo.faces.push(new THREE.Face3(i*3, i*3+1, i*3+2));
+  }
+  var mat = new THREE.LineBasicMaterial({
+    color: 0x0,
+    linewidth: 1
+  });
+  var line = new THREE.LineSegments(geo, mat);
+  scene.add(line);
+}
+
+/* debugging method - shows full model, unsliced (or a set of triangles, if given) */
+Model.prototype.renderPlainModel = function(scene, set) {
+  /* set up camera, put in model */
+  var center = model.getCenter();
+  cam.origin = new THREE.Vector3(center[0], center[1], center[2]);
+  cam.r = 5;
+  var geo = new THREE.Geometry();
+  if (set) {
+    for (var i=0; i<set.length; i++) {
+      for (j=0; j<3; j++) {
+        geo.vertices.push(set[i].vertices[j]);
+      }
+      geo.faces.push(new THREE.Face3(i*3, i*3+1, i*3+2));
+    }
+  }
+  else {
+    for (var i=0; i<model.count; i++) {
+      for (j=0; j<3; j++) {
+        geo.vertices.push(model.triangles[i].vertices[j]);
+      }
+      geo.faces.push(new THREE.Face3(i*3, i*3+1, i*3+2));
+    }
   }
   var mat = new THREE.MeshPhongMaterial({
     color: new THREE.Color(0xffffff),
@@ -79,7 +135,4 @@ Model.prototype.renderPlainModel = function(scene) {
     specular: 0
   });
   scene.add(new THREE.Mesh(geo, mat));
-  var light = new THREE.PointLight(0xffffff, 50);
-  light.position = new THREE.Vector3(center[0], center[1]+5, center[2]);
-  scene.add(light);
 }
